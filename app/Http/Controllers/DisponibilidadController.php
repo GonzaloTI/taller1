@@ -18,7 +18,7 @@ class DisponibilidadController extends Controller
         //
         $disponibilidades = Disponibilidad::all();
         $medicos = Medico::all();
-        return view('disponibilidad.disponibilidadlist', compact('disponibilidades','medicos'));
+        return view('disponibilidad.DDisponibilidadlist', compact('disponibilidades','medicos'));
 
     }
 
