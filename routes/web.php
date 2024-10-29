@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('citas/{id}/cancel', [CitaController::class, 'cancel'])->name('citas.cancel');
     Route::patch('citas/{id}/cancelrecepcion', [CitaController::class, 'cancelrecepcion'])->name('citas.cancelrecepcion');
     Route::patch('citas/{id}/finalize', [CitaController::class, 'finalize'])->name('citas.finalize');
+    Route::post('citas/{id}/notificar', [CitaController::class, 'notificar'])->name('citas.notificar');
+
     Route::get('cita/recepciones', [CitaController::class, 'recepciones'])->name('citas.recepciones');
   });
 

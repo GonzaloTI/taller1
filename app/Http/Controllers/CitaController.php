@@ -7,7 +7,8 @@ use App\Models\Disponibilidad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use GuzzleHttp\Client;
+set_time_limit(120); 
 class CitaController extends Controller
 {
     /**
@@ -194,6 +195,66 @@ public function finalize($id)
     }
 }
 
+public function notificar($id)
+{
+    $cita = Cita::findOrFail($id);
+ //   dd( $cita);
+    $userclienttoken = $cita->cliente->tokenNotificacion;
+    //dd( $userclienttoken);
+    $this->sendNotification2($userclienttoken,'hola','hola');
+
+    return redirect()->back()->with('success', 'Notificación enviada correctamente.');
+}
+
+  public function sendNotification($deviceToken, $title, $body,$rutaimagen)
+    {
+        $imagen =$rutaimagen;
+        $serverKey = 'AAAAM-ejTlM:APA91bEqdQRAjd_2_qXK23M9c7CbbDf7SVpjas789C9xMQXtEkUNSHeT4Gj9t3nTOG_Tk6JK9C4qDD1n1r0oZeRtI9otcoi-OhPJDsw93LypxhQpHRvi9ZG9eS_WmT_fHagLHSSZubtF';
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $client = new Client();
+        $response = $client->post($url, [
+            'headers' => [
+                'Authorization' => 'key=' . $serverKey,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'to' => $deviceToken,
+                'notification' => [
+                    'title' => $title,
+                    'body' => $body,
+                   // 'image' => $imagen,
+                ],
+            ],
+        ]);
+       dd($response);
+    }
+
+    public function sendNotification2($deviceToken, $title, $body)
+    {
+            $accessToken = 'AAAAM-ejTlM:APA91bEqdQRAjd_2_qXK23M9c7CbbDf7SVpjas789C9xMQXtEkUNSHeT4Gj9t3nTOG_Tk6JK9C4qDD1n1r0oZeRtI9otcoi-OhPJDsw93LypxhQpHRvi9ZG9eS_WmT_fHagLHSSZubtF';
+            $url = 'https://fcm.googleapis.com/v1/projects/parcialeventos-66383/messages:send';
+        
+            $client = new Client();
+            $response = $client->post($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'message' => [
+                        'token' => $deviceToken,
+                        'notification' => [
+                            'title' => $title,
+                            'body' => $body,
+                        ],
+                    ],
+                ],
+                'allow_redirects' => true,
+                'verify' => true,
+            ]);
+        
+            dd($response);
+        }
 public function cancelrecepcion($id)
 {
     try {

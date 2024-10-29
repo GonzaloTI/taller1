@@ -101,6 +101,13 @@
                                                 Finalizar
                                             </button>
                                         </form>
+                                         <!-- Botón para notificar -->
+                                         <form action="{{ route('citas.notificar', $cita->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-info btn-sm" onclick="return confirm('¿Deseas enviar una notificación para esta cita?')">
+                                                Notificar
+                                            </button>
+                                        </form>
                                     </td>
                                     
                                     
