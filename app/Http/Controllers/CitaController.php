@@ -195,66 +195,134 @@ public function finalize($id)
     }
 }
 
+
+
+
+function getAccessToken()
+{
+    // Obtener la ruta del archivo JSON de Firebase desde el archivo .env
+
+    $jsonKeyFilePath = base_path(config('services.firebase.credentials_path'));
+    //dd($jsonKeyFilePath);
+
+    if (!file_exists($jsonKeyFilePath)) {
+        throw new \Exception('El archivo de credenciales de Firebase no existe en la ruta: ' . $jsonKeyFilePath);
+    }
+
+    $tokenURL = 'https://oauth2.googleapis.com/token';
+
+    // Cargar el archivo JSON de la cuenta de servicio
+    $jwt = json_decode(file_get_contents($jsonKeyFilePath), true);
+
+    // Configurar el JWT
+    $clientEmail = $jwt['client_email'];
+    $privateKey = $jwt['private_key'];
+    $now = time();
+    $expiration = $now + 3600; // El token es válido por 1 hora
+
+    $claimSet = [
+        'iss' => $clientEmail,
+        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud' => $tokenURL,
+        'iat' => $now,
+        'exp' => $expiration,
+    ];
+
+    // Codificar el JWT
+    $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
+    $payload = json_encode($claimSet);
+    $jwtHeaderPayload = base64_encode($header) . '.' . base64_encode($payload);
+    $signature = '';
+    openssl_sign($jwtHeaderPayload, $signature, $privateKey, 'sha256');
+    $jwtSigned = $jwtHeaderPayload . '.' . base64_encode($signature);
+
+    // Solicitar el access token
+    $client = new Client();
+    $response = $client->post($tokenURL, [
+        'form_params' => [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $jwtSigned,
+        ],
+    ]);
+
+    $data = json_decode($response->getBody(), true);
+
+
+    //dd($data);
+
+    return $data['access_token'];
+}
+
+public function sendNotificationOautv1($deviceToken, $title, $body)
+{
+    $accessToken = $this->getAccessToken(); // Obtén el token de acceso usando la función anterior
+    $projectId = 'parcialeventos-66383';
+    $url = "https://fcm.googleapis.com/v1/projects/$projectId/messages:send";
+
+    // Imagen por defecto
+    $defaultImageUrl = 'https://clinicadetextos.com/wp-content/uploads/2016/09/clinica-de-textos.jpg';
+
+    // Sonido por defecto (para Android e iOS)
+    $defaultSound = 'default';
+
+    $client = new Client();
+    $response = $client->post($url, [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $accessToken,
+            'Content-Type' => 'application/json',
+        ],
+        'json' => [
+            'message' => [
+                'token' => $deviceToken,
+                'notification' => [
+                    'title' => $title,
+                    'body' => $body,
+                    'image' => $defaultImageUrl, // Añade la imagen por defecto
+                ],
+                'android' => [
+                    'notification' => [
+                        'sound' => $defaultSound,
+                    ],
+                ],
+                'apns' => [
+                    'payload' => [
+                        'aps' => [
+                            'sound' => $defaultSound,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+    //dd($response);
+    return $response->getBody()->getContents();
+}
+
+
+
 public function notificar($id)
 {
     $cita = Cita::findOrFail($id);
  //   dd( $cita);
-    $userclienttoken = $cita->cliente->tokenNotificacion;
-    //dd( $userclienttoken);
-    $this->sendNotification2($userclienttoken,'hola','hola');
+   $userclienttoken = $cita->cliente->tokenNotificacion;
+  // Extrae los detalles de la cita
+  $fecha = $cita->fecha;
+  $hora = $cita->hora;
+  $detalles = $cita->detalles;
 
+  // Construye el mensaje de notificación usando los detalles de la cita
+  $citaDetalles = "Fecha: $fecha, Hora: $hora, Detalles: $detalles";
+
+  // Enviar la notificación al cliente con los detalles de la cita
+  $this->sendNotificationOautv1($userclienttoken, 'Aviso de Cita Programada', "Se le Notifica que tiene una Cita pendiente: $citaDetalles");
+    //dd( $userclienttoken);
+  //  $this->sendNotification2($userclienttoken,'hola','hola');
+ //  $userclienttoken = 'flmE5is-RjuyvAibKjBXNp:APA91bGr8Hy3u64XKlN1yT5M--dU92h_GtOM_xtQNG1DVhQ5nlhoMZQZScNV5jft4u2yn2hQVTt06zKYjvwe67i4mjRHEcIzsn8G1Vh3hd_6BI4BtB6Jt9Q';
+  // $this->getAccessToken();
     return redirect()->back()->with('success', 'Notificación enviada correctamente.');
 }
 
-  public function sendNotification($deviceToken, $title, $body,$rutaimagen)
-    {
-        $imagen =$rutaimagen;
-        $serverKey = 'AAAAM-ejTlM:APA91bEqdQRAjd_2_qXK23M9c7CbbDf7SVpjas789C9xMQXtEkUNSHeT4Gj9t3nTOG_Tk6JK9C4qDD1n1r0oZeRtI9otcoi-OhPJDsw93LypxhQpHRvi9ZG9eS_WmT_fHagLHSSZubtF';
-        $url = 'https://fcm.googleapis.com/fcm/send';
-        $client = new Client();
-        $response = $client->post($url, [
-            'headers' => [
-                'Authorization' => 'key=' . $serverKey,
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                'to' => $deviceToken,
-                'notification' => [
-                    'title' => $title,
-                    'body' => $body,
-                   // 'image' => $imagen,
-                ],
-            ],
-        ]);
-       dd($response);
-    }
 
-    public function sendNotification2($deviceToken, $title, $body)
-    {
-            $accessToken = 'AAAAM-ejTlM:APA91bEqdQRAjd_2_qXK23M9c7CbbDf7SVpjas789C9xMQXtEkUNSHeT4Gj9t3nTOG_Tk6JK9C4qDD1n1r0oZeRtI9otcoi-OhPJDsw93LypxhQpHRvi9ZG9eS_WmT_fHagLHSSZubtF';
-            $url = 'https://fcm.googleapis.com/v1/projects/parcialeventos-66383/messages:send';
-        
-            $client = new Client();
-            $response = $client->post($url, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'message' => [
-                        'token' => $deviceToken,
-                        'notification' => [
-                            'title' => $title,
-                            'body' => $body,
-                        ],
-                    ],
-                ],
-                'allow_redirects' => true,
-                'verify' => true,
-            ]);
-        
-            dd($response);
-        }
 public function cancelrecepcion($id)
 {
     try {
@@ -266,6 +334,19 @@ public function cancelrecepcion($id)
             // Cambia el estado de la cita a "cancelado"
             $cita->estado = 'cancelado';
             $cita->save();
+            //   dd( $cita);
+            $userclienttoken = $cita->cliente->tokenNotificacion;
+             // Extrae los detalles de la cita
+             $fecha = $cita->fecha;
+             $hora = $cita->hora;
+             $detalles = $cita->detalles;
+           
+             // Construye el mensaje de notificación usando los detalles de la cita
+             $citaDetalles = "Fecha: $fecha, Hora: $hora, Detalles: $detalles";
+           
+             // Enviar la notificación al cliente con los detalles de la cita
+             $this->sendNotificationOautv1($userclienttoken, 'Aviso de Cancelacion de Cita', "Se le Notifica que se cancelo la Cita : $citaDetalles");
+
             // Retorna con mensaje de éxito
             return redirect()->route('citas.recepciones')->with('success', 'Cita cancelada con éxito.');
         }
