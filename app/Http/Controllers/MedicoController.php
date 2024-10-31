@@ -61,7 +61,7 @@ class MedicoController extends Controller
             $user = User::create([
                 'name' => request('name'),
                 'email' => request('email'),
-                'password' => bcrypt(request('password')), // Asegúrate de cifrar la contraseña
+                'password' => request('password'), // Asegúrate de cifrar la contraseña
             ]);
             $user->role = 'medico';
             // Asociar el usuario con el médico

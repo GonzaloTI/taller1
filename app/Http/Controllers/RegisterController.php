@@ -56,7 +56,7 @@ class RegisterController extends Controller{
             $user = User::create([
                 'name' => request('name'),
                 'email' => request('email'),
-                'password' => bcrypt(request('password')), // Asegúrate de cifrar la contraseña
+                'password' => request('password'), // Asegúrate de cifrar la contraseña
             ]);
             $user->role = 'cliente';
             $Client->user_id = $user->id;
