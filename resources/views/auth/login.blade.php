@@ -3,7 +3,11 @@
 @section('title', 'Login')
 
 @section('content')
-    <!-- Page content-->
+    <!-- Page content-->@if ($errors->has('error'))
+                        <div class="alert alert-danger">
+                            {{ $errors->first('error') }}
+                        </div>
+                    @endif
     <section class="py-5">
         <div class="container">
             <div class="row justify-content-center">

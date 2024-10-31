@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Cliente;
+use Illuminate\Support\Facades\DB;
 
 class RegisterController extends Controller{
 
@@ -13,26 +14,29 @@ class RegisterController extends Controller{
         return view('auth.register');
     }
 
-    public function store()
+    public function store(Request $request)
     {
         try {
+ // dd('hola');
             // Validar los datos recibidos
-            $this->validate(request(), [
-                'ci' => 'required|numeric', // Aseguramos que CI sea numérico
+            $request->validate([
+                'ci' => 'required|numeric',
                 'nombre' => 'required|string|max:255',
                 'a_paterno' => 'required|string|max:255',
                 'a_materno' => 'required|string|max:255',
-                'sexo' => 'required|string|in:masculino,femenino', // Validar que el sexo sea masculino o femenino
-                'telefono' => 'required|numeric|max:15',
+                'sexo' => 'required|string|in:masculino,femenino',
+                'telefono' => 'required|digits_between:7,15',
                 'direccion' => 'required|string|max:255',
                 'name' => 'required|string|max:255',
-                'email' => 'required|email',
+                'email' => 'required|email|unique:users,email',
                 'password' => 'required|confirmed',
             ]);
         
             // Transformar el valor de sexo a "f" o "m"
             $sexo = request('sexo') === 'femenino' ? 'f' : 'm';
-    
+           
+            DB::beginTransaction();
+          
             // Crear un array con todos los campos
             $data = [
                 'ci' => request('ci'),
@@ -60,9 +64,11 @@ class RegisterController extends Controller{
             // Guardar los cambios
             $user->save();
             $Client->save();
-        
+           // Confirmar la transacción
+           DB::commit();
             return redirect()->to('/login');
         } catch (\Exception $e) {
+            DB::rollback();
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
