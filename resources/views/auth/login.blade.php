@@ -3,6 +3,16 @@
 @section('title', 'Login')
 
 @section('content')
+
+        <head>
+
+            <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+
+        <!-- Your code -->
+        </head>
+
+
     <!-- Page content-->@if ($errors->has('error'))
                         <div class="alert alert-danger">
                             {{ $errors->first('error') }}
@@ -33,6 +43,8 @@
                                 <p class="border border-red-500 rounded-md bg-red-100 w-full text-red-600 p-2 my-2">
                                     {{ $message }}</p>
                             @enderror
+
+                            <div class="h-captcha" data-sitekey="2e901190-250a-4e82-a98a-b1aa04a6971e"></div>
 
                             <div class="pt-1 mb-4">
                                 <button class="btn btn-dark btn-lg btn-block" type="submit">Login</button>

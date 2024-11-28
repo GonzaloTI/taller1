@@ -13,6 +13,11 @@ class SessionsController extends Controller{
         return view('auth.login');
     }
     public function store(Request $request){
+
+        $request->validate([
+            'h-captcha-response' => 'required', // Aseguramos que el captcha haya sido respondido
+        ]);
+
         if(auth()->attempt(request(['email','password']))==false){
             return back()->withErrors(['message'=> 'the email or password is incorrect, please try again']);
         }else{
