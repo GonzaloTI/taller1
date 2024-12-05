@@ -58,6 +58,11 @@
                 alert('Por favor selecciona al menos una imagen.');
                 return;
             }
+             // Verificar si se seleccionaron más de 20 imágenes
+            if (files.length > 20) {
+                alert('Puedes seleccionar un máximo de 20 imágenes.');
+                return;
+            }
 
             // Agregar todas las imágenes al FormData
             for (let i = 0; i < files.length; i++) {
@@ -66,7 +71,7 @@
 
             try {
                 // Hacer solicitud POST hacia la API
-                const response = await fetch('http://44.204.9.19/analizar-imagen/', {
+                const response = await fetch('http://18.233.97.74/analizar-imagen/', {
                     method: 'POST',
                     body: formData
                 });
